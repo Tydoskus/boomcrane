@@ -532,6 +532,12 @@
 
       const zoneLeft = truck.zoneX - truck.zoneW/2;
       const zoneRight = truck.zoneX + truck.zoneW/2;
+      if (c.x > zoneLeft && c.x < zoneRight && c.y >= groundY - c.r - 0.02) {
+        c.y = groundY - c.r;
+        c.vy = 0;
+        c.vx *= 0.7;
+      }
+
       if (c.sleep > 0.8 && c.x > zoneLeft && c.x < zoneRight) {
         deliveredCount += 1;
         money += c.massKg * 0.01;
@@ -665,7 +671,16 @@
       ctx.roundRect(z1.x, z1.y + 3*devicePixelRatio, z2.x - z1.x, z2.y - z1.y - 3*devicePixelRatio, 10*devicePixelRatio);
       ctx.stroke();
       ctx.setLineDash([]);
+
+      ctx.fillStyle = 'rgba(170,255,210,0.85)';
+      ctx.font = `${12*devicePixelRatio}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Drop Zone', (z1.x + z2.x)/2, z1.y - 6*devicePixelRatio);
     }
+
+    drawEdgeArrow(truck.zoneX, truck.bedTopY, 'Drop Zone', 'rgba(140,255,190,0.9)');
+    drawEdgeArrow(conveyor.startX - 1.2, conveyor.y - 0.4, 'Incoming Loads', 'rgba(180,220,255,0.9)');
 
     // Crane
     const pivot = boomPivot();

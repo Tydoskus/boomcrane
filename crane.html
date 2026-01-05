@@ -25,6 +25,26 @@ permalink: /crane.html
       padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(40,80,120,0.2);
       background: rgba(255,255,255,0.65);
     }
+    .upgrade-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .upgrade-btn {
+      border: 1px solid rgba(40,80,120,0.25);
+      background: rgba(255,255,255,0.75);
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 12px;
+      color: #0b1a24;
+      cursor: pointer;
+      user-select: none;
+    }
+    .upgrade-btn[data-disabled="true"] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
     .warn { color:#b94b4b; }
     .ok { color:#1c7c4a; }
     .muted { opacity:.86; }
@@ -223,6 +243,8 @@ permalink: /crane.html
   let lastDeliveryTime = -999;
   let lastPayout = 0;
   let payoutFlash = 0;
+  let goalMoney = 250;
+  let goalFlash = 0;
   let order = null;
 
   function reset() {
@@ -255,6 +277,8 @@ permalink: /crane.html
     lastDeliveryTime = -999;
     lastPayout = 0;
     payoutFlash = 0;
+    goalMoney = 250;
+    goalFlash = 0;
     order = null;
   }
   reset();
@@ -341,6 +365,16 @@ permalink: /crane.html
     crates.push(makeCrate(`L${nextCrateId++}`, conveyor.startX, groundY - 0.42, massKg));
   }
 
+  function upgradeCost(kind) {
+    const base = {
+      boomStrengthLevel: 140,
+      cableStrengthLevel: 120,
+      counterweightLevel: 160,
+    }[kind] || 150;
+    const level = upgrades[kind];
+    return Math.round(base * Math.pow(1.55, level));
+  }
+
   // ---------- Grabbing ----------
   function tryGrabOrRelease() {
     if (crane.tipped) return;
@@ -379,6 +413,7 @@ permalink: /crane.html
   function step(dt) {
     time += dt;
     payoutFlash = Math.max(0, payoutFlash - dt);
+    goalFlash = Math.max(0, goalFlash - dt);
 
     if (!order || time > order.expiresAt) {
       rollOrder();
@@ -597,6 +632,10 @@ permalink: /crane.html
         money += payout;
         lastPayout = payout;
         payoutFlash = 2.2;
+        if (money >= goalMoney) {
+          goalMoney = Math.round(goalMoney * 1.6);
+          goalFlash = 3;
+        }
         crates.splice(idx, 1);
         continue;
       }
@@ -793,6 +832,15 @@ permalink: /crane.html
       ctx.fillText(`+${moneyFmt.format(lastPayout)}`, pop.x, pop.y);
     }
 
+    if (goalFlash > 0) {
+      const alpha = clamp(goalFlash / 3, 0, 1);
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+      ctx.font = `700 ${18*devicePixelRatio}px system-ui`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('GOAL COMPLETE!', canvas.width * 0.5, canvas.height * 0.12);
+    }
+
     drawEdgeArrow(truck.zoneX, truck.bedTopY, 'Drop Zone', '#1f8f52');
     drawEdgeArrow(conveyor.startX - 1.2, conveyor.y - 0.4, 'Incoming Loads', '#2a3d4f');
 
@@ -945,6 +993,17 @@ permalink: /crane.html
   // ---------- HUD ----------
   const hud = document.getElementById('hud');
 
+  hud.addEventListener('click', (event) => {
+    const button = event.target.closest('.upgrade-btn');
+    if (!button) return;
+    const kind = button.dataset.upgrade;
+    if (!kind) return;
+    const cost = upgradeCost(kind);
+    if (money < cost) return;
+    money -= cost;
+    upgrades[kind] += 1;
+  });
+
   const kgToLb = (kg) => kg * 2.2046226218;
   const moneyFmt = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -973,6 +1032,9 @@ permalink: /crane.html
     const carry = load.carryingId ? `Carrying <b>${load.carryingId}</b>` : 'Hook only';
     const orderTime = order ? Math.max(0, order.expiresAt - time) : 0;
     const orderText = order ? `${Math.round(order.minKg)}-${Math.round(order.maxKg)}kg` : '...';
+    const boomCost = upgradeCost('boomStrengthLevel');
+    const cableCost = upgradeCost('cableStrengthLevel');
+    const counterCost = upgradeCost('counterweightLevel');
 
     hud.innerHTML = `
       <div class="row" style="margin-bottom:6px">
@@ -998,6 +1060,10 @@ permalink: /crane.html
       </div>
 
       <div style="margin-top:8px">
+        <b>Goal</b> Earn ${moneyFmt.format(goalMoney)}
+      </div>
+
+      <div style="margin-top:8px">
         <b>Rated capacity (this setup)</b>:
         <span class="${utilClass}"><b>${Math.round(ratedKg)}kg</b></span>
         <span class="muted">(${Math.round(kgToLb(ratedKg))}lb)</span>
@@ -1018,6 +1084,18 @@ permalink: /crane.html
         ${carry}
         ${crane.tipped ? ` — <span class="warn"><b>Crane is down.</b></span>` : ''}
         ${crane.cableBroken && !crane.tipped ? ` — <span class="warn"><b>Winch disabled.</b></span>` : ''}
+      </div>
+
+      <div class="upgrade-row">
+        <button class="upgrade-btn" data-upgrade="boomStrengthLevel" data-disabled="${money < boomCost}">
+          Boom +${upgrades.boomStrengthLevel} • ${moneyFmt.format(boomCost)}
+        </button>
+        <button class="upgrade-btn" data-upgrade="cableStrengthLevel" data-disabled="${money < cableCost}">
+          Cable +${upgrades.cableStrengthLevel} • ${moneyFmt.format(cableCost)}
+        </button>
+        <button class="upgrade-btn" data-upgrade="counterweightLevel" data-disabled="${money < counterCost}">
+          Counterweight +${upgrades.counterweightLevel} • ${moneyFmt.format(counterCost)}
+        </button>
       </div>
 
       <div class="muted" style="margin-top:6px">

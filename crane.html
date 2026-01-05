@@ -793,6 +793,9 @@ permalink: /crane.html
       ctx.fillText(`+${moneyFmt.format(lastPayout)}`, pop.x, pop.y);
     }
 
+    drawEdgeArrow(truck.zoneX, truck.bedTopY, 'Drop Zone', '#1f8f52');
+    drawEdgeArrow(conveyor.startX - 1.2, conveyor.y - 0.4, 'Incoming Loads', '#2a3d4f');
+
     // Crane
     const pivot = boomPivot();
     const tip = boomTip();

@@ -460,7 +460,7 @@ permalink: /crane.html
     selectShiftContracts();
   }
   reset();
-  document.getElementById('restart').addEventListener('click', reset);
+  document.getElementById('restart').addEventListener('pointerdown', reset);
 
   // ---------- Geometry ----------
   function boomPivot() { return { x: crane.x, y: crane.y - crane.mastH }; }
@@ -1469,7 +1469,7 @@ permalink: /crane.html
   // ---------- HUD ----------
   const hud = document.getElementById('hud');
 
-  hud.addEventListener('click', (event) => {
+  hud.addEventListener('pointerdown', (event) => {
     const target = event.target instanceof Element ? event.target : null;
     const toggle = target?.closest('.hud-toggle');
     if (toggle) {

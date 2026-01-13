@@ -1,0 +1,1166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Territory Conquer</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#0f1733;
+      --panel2:#111c3d;
+      --text:#e7ecff;
+      --muted:#a9b3d6;
+      --line:rgba(255,255,255,.12);
+      --p1:#4aa3ff;
+      --p2:#ff4a6b;
+      --neu:#9aa6c7;
+      --good:#45e0a3;
+      --warn:#ffcf5a;
+      --bad:#ff6f86;
+      --shadow: 0 12px 28px rgba(0,0,0,.35);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background: radial-gradient(1200px 800px at 15% 15%, #16245a 0%, var(--bg) 60%); color:var(--text); }
+
+    .wrap{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:14px;
+      padding:14px;
+      height:100%;
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .left{
+      display:flex;
+      flex-direction:column;
+      min-width: 280px;
+    }
+
+    .hdr{
+      padding:14px 14px 10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.0));
+      border-bottom:1px solid var(--line);
+    }
+    .title{
+      font-weight:800;
+      letter-spacing:.4px;
+      margin:0 0 6px 0;
+      font-size:18px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;background:var(--good);
+      box-shadow:0 0 0 4px rgba(69,224,163,.12);
+    }
+    .sub{ color:var(--muted); font-size:12px; line-height:1.35; }
+
+    .section{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+    }
+    .row{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      margin:8px 0;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .row b{ color:var(--text); font-weight:700; }
+
+    .btnrow{
+      display:flex; gap:10px; margin-top:10px;
+    }
+    button{
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:700;
+      letter-spacing:.2px;
+      transition: transform .06s ease, background .12s ease;
+      user-select:none;
+    }
+    button:active{ transform: translateY(1px); }
+    button:hover{ background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.04)); }
+    button.secondary{
+      background: transparent;
+    }
+
+    .mini{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .control{
+      display:grid;
+      grid-template-columns: 1fr 120px;
+      gap:10px;
+      align-items:center;
+      margin:10px 0 0;
+    }
+    input[type="range"]{ width:100%; }
+    .pill{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      text-align:center;
+      font-weight:800;
+      font-size:12px;
+      color:var(--text);
+      user-select:none;
+    }
+
+    .log{
+      flex:1;
+      overflow:auto;
+      padding:12px 14px;
+      background: rgba(0,0,0,.12);
+    }
+    .log h3{
+      margin:0 0 10px 0;
+      font-size:13px;
+      color:var(--muted);
+      letter-spacing:.2px;
+    }
+    .evt{
+      font-size:12px;
+      color:var(--muted);
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      margin:8px 0;
+      background: rgba(255,255,255,.03);
+      line-height:1.35;
+    }
+    .evt .tag{
+      display:inline-block;
+      font-weight:900;
+      font-size:11px;
+      padding:3px 8px;
+      border-radius:999px;
+      margin-right:8px;
+      color:#0b1020;
+    }
+    .tag.p1{ background: var(--p1); }
+    .tag.p2{ background: var(--p2); }
+    .tag.sys{ background: var(--warn); }
+
+    .game{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+    }
+    .topbar .status{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .badge{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:800;
+      color:var(--text);
+      font-size:12px;
+    }
+    .badge .sw{
+      display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:8px;vertical-align:-1px;
+    }
+    .sw.p1{ background:var(--p1); }
+    .sw.p2{ background:var(--p2); }
+    .sw.neu{ background:var(--neu); }
+
+    canvas{ width:100%; height:100%; display:block; }
+    .hint{
+      position:absolute;
+      left:12px; bottom:12px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(15,23,51,.72);
+      backdrop-filter: blur(10px);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      max-width:min(520px, 80%);
+      box-shadow: var(--shadow);
+      user-select:none;
+      pointer-events:none;
+    }
+    .hint b{ color:var(--text); }
+
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+      .left{ order:2; }
+      .game{ order:1; min-height: 60vh; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="panel left">
+      <div class="hdr">
+        <div class="title"><span class="dot"></span>Territory Conquer</div>
+        <div class="sub">
+          Generate troops per territory, send armies along links, capture the map.
+          You are <b style="color:var(--p1)">Blue</b>. AI is <b style="color:var(--p2)">Red</b>.
+        </div>
+
+        <div class="btnrow">
+          <button id="btnNew">New Game</button>
+          <button id="btnPause" class="secondary">Pause</button>
+        </div>
+
+        <div class="control">
+          <div class="mini">Send % from selected</div>
+          <div class="pill" id="sendPctPill">50%</div>
+          <input id="sendPct" type="range" min="10" max="90" value="50" />
+        </div>
+
+        <div class="control">
+          <div class="mini">Game speed</div>
+          <div class="pill" id="speedPill">1.0×</div>
+          <input id="speed" type="range" min="50" max="200" value="100" />
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="row"><span>Territories</span><b id="statTerr">—</b></div>
+        <div class="row"><span>Blue troops</span><b id="statP1">—</b></div>
+        <div class="row"><span>Red troops</span><b id="statP2">—</b></div>
+        <div class="row"><span>Neutral troops</span><b id="statNeu">—</b></div>
+        <div class="row"><span>Income (Blue)</span><b id="statInc1">—</b></div>
+        <div class="row"><span>Income (Red)</span><b id="statInc2">—</b></div>
+      </div>
+
+      <div class="log" id="log">
+        <h3>Events</h3>
+      </div>
+    </div>
+
+    <div class="panel game">
+      <div class="topbar">
+        <div class="status">
+          <span class="badge"><span class="sw p1"></span>Blue</span>
+          <span class="badge"><span class="sw p2"></span>Red</span>
+          <span class="badge"><span class="sw neu"></span>Neutral</span>
+          <span class="badge" id="badgeSel">Selected: —</span>
+          <span class="badge" id="badgeMode">Mode: Click-to-send</span>
+        </div>
+        <div class="status">
+          <span class="badge" id="badgeWin">—</span>
+        </div>
+      </div>
+
+      <canvas id="c"></canvas>
+      <div class="hint">
+        <b>Controls:</b>
+        Click a <b>Blue</b> territory to select.
+        Click a connected territory to send <b>Send %</b> of troops.
+        Hold <b>Shift</b> while clicking target to send <b>all</b>.
+        Drag from a selected territory to a neighbor to send.
+        <br/>
+        <b>Tip:</b> Captured territories generate troops faster as they level up.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Territory Conquer - single-file game
+    // Core ideas:
+    // - Graph of territories with links
+    // - Each territory generates troops over time (owner-based; neutral slower)
+    // - Player can send troops along links; travel time depends on distance
+    // - Combat on arrival; capture if attackers exceed defenders
+    // - Territories "level up" based on held time to increase generation
+    // - AI periodically evaluates attacks and defenses
+
+    (() => {
+      /** @type {HTMLCanvasElement} */
+      const canvas = document.getElementById('c');
+      const ctx = canvas.getContext('2d');
+
+      const ui = {
+        btnNew: document.getElementById('btnNew'),
+        btnPause: document.getElementById('btnPause'),
+        sendPct: document.getElementById('sendPct'),
+        sendPctPill: document.getElementById('sendPctPill'),
+        speed: document.getElementById('speed'),
+        speedPill: document.getElementById('speedPill'),
+        statTerr: document.getElementById('statTerr'),
+        statP1: document.getElementById('statP1'),
+        statP2: document.getElementById('statP2'),
+        statNeu: document.getElementById('statNeu'),
+        statInc1: document.getElementById('statInc1'),
+        statInc2: document.getElementById('statInc2'),
+        badgeSel: document.getElementById('badgeSel'),
+        badgeMode: document.getElementById('badgeMode'),
+        badgeWin: document.getElementById('badgeWin'),
+        log: document.getElementById('log'),
+      };
+
+      // --------- RNG (deterministic-ish if you want, currently seeded by time)
+      function mulberry32(a){
+        return function(){
+          let t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ (t >>> 15), t | 1);
+          t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+      let rand = mulberry32((Date.now() ^ (Math.random()*1e9)) >>> 0);
+
+      // --------- Game constants
+      const OWNER = { NEU: 0, P1: 1, P2: 2 };
+      const COLORS = {
+        bg1: '#0b1020',
+        p1: getComputedStyle(document.documentElement).getPropertyValue('--p1').trim() || '#4aa3ff',
+        p2: getComputedStyle(document.documentElement).getPropertyValue('--p2').trim() || '#ff4a6b',
+        neu: getComputedStyle(document.documentElement).getPropertyValue('--neu').trim() || '#9aa6c7',
+        line: 'rgba(255,255,255,.12)',
+        text: 'rgba(231,236,255,.95)',
+        muted: 'rgba(169,179,214,.9)',
+      };
+
+      // Generation & combat
+      const GEN = {
+        basePlayer: 0.95,      // troops/sec at level 1
+        baseNeutral: 0.35,     // troops/sec
+        levelBonus: 0.22,      // + per level
+        maxLevel: 6,
+        levelUpEvery: 18.0,    // seconds held -> next level
+      };
+
+      const COMBAT = {
+        defenderAdvantage: 1.05, // small edge for defenders
+        captureFloor: 1.0,       // min troops remain when captured
+      };
+
+      const MOVE = {
+        speed: 160,             // px/sec
+        minSend: 1,
+      };
+
+      const AI = {
+        thinkEvery: 0.85,        // seconds
+        aggressiveness: 0.72,    // higher -> more attacks
+        reserveFrac: 0.35,       // keep fraction at source
+        safeMargin: 1.15,        // attack only if (attackers > defenders * margin)
+        opportunism: 0.35,       // chance to snipe weak neighbor
+      };
+
+      // --------- Game state
+      let W = 0, H = 0, DPR = 1;
+      let paused = false;
+      let timeScale = 1.0;
+
+      /** @type {{id:number,x:number,y:number,owner:number,troops:number,level:number,heldTime:number,links:number[]}[]} */
+      let nodes = [];
+      /** @type {{from:number,to:number,owner:number,amount:number,progress:number,dist:number,fx:number,fy:number,tx:number,ty:number}[]} */
+      let marches = [];
+
+      let selected = -1;
+      let dragging = false;
+      let dragPos = {x:0,y:0};
+      let lastT = performance.now();
+
+      function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+      function lerp(a,b,t){ return a + (b-a)*t; }
+      function dist(ax,ay,bx,by){ const dx=ax-bx, dy=ay-by; return Math.hypot(dx,dy); }
+
+      function fmt(n){
+        if (n >= 1e9) return (n/1e9).toFixed(2)+'B';
+        if (n >= 1e6) return (n/1e6).toFixed(2)+'M';
+        if (n >= 1e3) return (n/1e3).toFixed(2)+'K';
+        return Math.floor(n).toString();
+      }
+
+      function ownerName(o){
+        if (o === OWNER.P1) return 'Blue';
+        if (o === OWNER.P2) return 'Red';
+        return 'Neutral';
+      }
+
+      function ownerColor(o){
+        if (o === OWNER.P1) return COLORS.p1;
+        if (o === OWNER.P2) return COLORS.p2;
+        return COLORS.neu;
+      }
+
+      function logEvent(tag, text){
+        const div = document.createElement('div');
+        div.className = 'evt';
+        const span = document.createElement('span');
+        span.className = 'tag ' + (tag === OWNER.P1 ? 'p1' : tag === OWNER.P2 ? 'p2' : 'sys');
+        span.textContent = tag === OWNER.P1 ? 'BLUE' : tag === OWNER.P2 ? 'RED' : 'SYS';
+        div.appendChild(span);
+        div.appendChild(document.createTextNode(text));
+        ui.log.appendChild(div);
+        // Keep last ~30
+        const evts = ui.log.querySelectorAll('.evt');
+        if (evts.length > 30) evts[0].remove();
+        ui.log.scrollTop = ui.log.scrollHeight;
+      }
+
+      // --------- Map generation
+      function newGame(){
+        marches = [];
+        selected = -1;
+        dragging = false;
+
+        const n = 16; // territories
+        nodes = [];
+
+        // Place nodes with Poisson-ish rejection to avoid overlaps
+        const pad = 70;
+        const minSep = 88;
+        for (let i=0; i<n; i++){
+          let tries = 0;
+          while(true){
+            tries++;
+            const x = pad + rand()*(W - pad*2);
+            const y = pad + rand()*(H - pad*2);
+            let ok = true;
+            for (const p of nodes){
+              if (dist(x,y,p.x,p.y) < minSep) { ok=false; break; }
+            }
+            if (ok || tries > 600){
+              nodes.push({
+                id:i, x, y,
+                owner: OWNER.NEU,
+                troops: 8 + rand()*18,
+                level: 1,
+                heldTime: 0,
+                links: []
+              });
+              break;
+            }
+          }
+        }
+
+        // Connect with k-nearest + enforce connectivity
+        const K = 3;
+        for (let i=0;i<n;i++){
+          const a = nodes[i];
+          const dists = [];
+          for (let j=0;j<n;j++){
+            if (i===j) continue;
+            const b = nodes[j];
+            dists.push([j, dist(a.x,a.y,b.x,b.y)]);
+          }
+          dists.sort((x,y)=>x[1]-y[1]);
+          for (let t=0;t<K;t++){
+            const j = dists[t][0];
+            link(i,j);
+          }
+        }
+        // Add a few random extra edges for interesting play
+        for (let k=0;k<6;k++){
+          const i = (rand()*n)|0;
+          const j = (rand()*n)|0;
+          if (i!==j) link(i,j);
+        }
+
+        // Ensure graph connected by linking components
+        connectComponents();
+
+        // Assign starting bases
+        // pick farthest pair
+        let bestI=0, bestJ=1, bestD=-1;
+        for (let i=0;i<n;i++){
+          for (let j=i+1;j<n;j++){
+            const d = dist(nodes[i].x,nodes[i].y,nodes[j].x,nodes[j].y);
+            if (d>bestD){ bestD=d; bestI=i; bestJ=j; }
+          }
+        }
+        nodes[bestI].owner = OWNER.P1;
+        nodes[bestI].troops = 40;
+        nodes[bestI].level = 2;
+
+        nodes[bestJ].owner = OWNER.P2;
+        nodes[bestJ].troops = 40;
+        nodes[bestJ].level = 2;
+
+        // Nearby neutrals slightly weaker to reduce stalemates
+        for (const t of nodes){
+          if (t.owner !== OWNER.NEU) continue;
+          const d1 = dist(t.x,t.y,nodes[bestI].x,nodes[bestI].y);
+          const d2 = dist(t.x,t.y,nodes[bestJ].x,nodes[bestJ].y);
+          const near = Math.min(d1,d2);
+          if (near < 180) t.troops *= 0.65;
+        }
+
+        logEvent(null, 'New map generated.');
+        ui.badgeWin.textContent = '—';
+      }
+
+      function link(i,j){
+        const a = nodes[i], b = nodes[j];
+        if (!a.links.includes(j)) a.links.push(j);
+        if (!b.links.includes(i)) b.links.push(i);
+      }
+
+      function connectComponents(){
+        const n = nodes.length;
+        const comp = new Array(n).fill(-1);
+        let c = 0;
+
+        function dfs(start){
+          const stack = [start];
+          comp[start] = c;
+          while(stack.length){
+            const u = stack.pop();
+            for (const v of nodes[u].links){
+              if (comp[v] === -1){
+                comp[v] = c;
+                stack.push(v);
+              }
+            }
+          }
+        }
+
+        for (let i=0;i<n;i++){
+          if (comp[i] === -1){
+            dfs(i);
+            c++;
+          }
+        }
+        if (c <= 1) return;
+
+        // For each component, find a representative node
+        const reps = [];
+        for (let k=0;k<c;k++){
+          let best = -1, bestScore = 1e9;
+          for (let i=0;i<n;i++){
+            if (comp[i] !== k) continue;
+            // prefer more central
+            const score = Math.abs(nodes[i].x - W/2) + Math.abs(nodes[i].y - H/2);
+            if (score < bestScore){ bestScore=score; best=i; }
+          }
+          reps.push(best);
+        }
+
+        // Chain-connect components by nearest reps
+        for (let k=0;k<reps.length-1;k++){
+          const a = reps[k];
+          let bestJ = -1, bestD = 1e9;
+          for (let m=k+1;m<reps.length;m++){
+            const b = reps[m];
+            const d = dist(nodes[a].x,nodes[a].y,nodes[b].x,nodes[b].y);
+            if (d < bestD){ bestD=d; bestJ=b; }
+          }
+          if (bestJ !== -1) link(a, bestJ);
+        }
+      }
+
+      // --------- Troop generation & leveling
+      function genRate(node){
+        const lvl = node.level;
+        if (node.owner === OWNER.NEU) return GEN.baseNeutral + (lvl-1)*(GEN.levelBonus*0.35);
+        return GEN.basePlayer + (lvl-1)*GEN.levelBonus;
+      }
+
+      function updateEconomy(dt){
+        for (const n of nodes){
+          // Leveling
+          if (n.owner !== OWNER.NEU){
+            n.heldTime += dt;
+            while (n.level < GEN.maxLevel && n.heldTime >= GEN.levelUpEvery){
+              n.heldTime -= GEN.levelUpEvery;
+              n.level++;
+              // small troop bump on level up
+              n.troops += 3 + 2*(n.level-1);
+              if (n.owner === OWNER.P1) logEvent(OWNER.P1, `Territory ${n.id} leveled up to L${n.level}.`);
+              if (n.owner === OWNER.P2) logEvent(OWNER.P2, `Territory ${n.id} leveled up to L${n.level}.`);
+            }
+          } else {
+            // neutrals don't "hold"; keep at level 1-2 slowly
+            n.heldTime += dt*0.15;
+            if (n.level < 2 && n.heldTime > 30){
+              n.level = 2;
+              n.heldTime = 0;
+            }
+          }
+
+          // Generation
+          n.troops += genRate(n) * dt;
+          // soft cap to reduce runaway stacking
+          const cap = 220 + n.level*55;
+          if (n.troops > cap) n.troops = lerp(n.troops, cap, 0.03);
+        }
+      }
+
+      // --------- Marches
+      function spawnMarch(from, to, owner, amount){
+        const a = nodes[from], b = nodes[to];
+        const d = dist(a.x,a.y,b.x,b.y);
+        marches.push({
+          from, to, owner, amount,
+          progress: 0,
+          dist: d,
+          fx: a.x, fy: a.y,
+          tx: b.x, ty: b.y
+        });
+      }
+
+      function resolveArrival(m){
+        const target = nodes[m.to];
+        const atkOwner = m.owner;
+        const defOwner = target.owner;
+
+        const atk = m.amount;
+        const def = target.troops;
+
+        if (atkOwner === defOwner){
+          // Reinforcement
+          target.troops += atk;
+          return;
+        }
+
+        // Combat
+        const effectiveDef = def * COMBAT.defenderAdvantage;
+        if (atk > effectiveDef){
+          // Capture
+          const remain = Math.max(COMBAT.captureFloor, atk - effectiveDef);
+          const prev = target.owner;
+
+          target.owner = atkOwner;
+          target.troops = remain;
+          target.level = Math.max(1, Math.min(target.level, 2)); // conquest resets some infrastructure
+          target.heldTime = 0;
+
+          if (atkOwner === OWNER.P1) logEvent(OWNER.P1, `Captured territory ${target.id} from ${ownerName(prev)}.`);
+          else logEvent(OWNER.P2, `Captured territory ${target.id} from ${ownerName(prev)}.`);
+        } else {
+          // Defense holds
+          target.troops = Math.max(0, def - atk / COMBAT.defenderAdvantage);
+        }
+      }
+
+      function updateMarches(dt){
+        const speed = MOVE.speed;
+        for (let i=marches.length-1; i>=0; i--){
+          const m = marches[i];
+          m.progress += (speed * dt) / m.dist;
+          if (m.progress >= 1){
+            resolveArrival(m);
+            marches.splice(i,1);
+          }
+        }
+      }
+
+      // --------- Sending logic
+      function canSend(from, to){
+        if (from < 0 || to < 0) return false;
+        return nodes[from].links.includes(to);
+      }
+
+      function sendTroops(from, to, fraction, forceAll=false){
+        const src = nodes[from];
+        if (!canSend(from,to)) return false;
+
+        const total = Math.floor(src.troops);
+        if (total <= MOVE.minSend) return false;
+
+        let amount;
+        if (forceAll) {
+          amount = Math.max(MOVE.minSend, total - 1); // keep 1 behind
+        } else {
+          amount = Math.floor(total * fraction);
+          amount = clamp(amount, MOVE.minSend, total - 1);
+        }
+
+        if (amount <= 0) return false;
+
+        src.troops -= amount;
+        spawnMarch(from, to, src.owner, amount);
+
+        return true;
+      }
+
+      // --------- AI
+      let aiTimer = 0;
+
+      function aiThink(dt){
+        aiTimer -= dt;
+        if (aiTimer > 0) return;
+        aiTimer = AI.thinkEvery;
+
+        // gather red nodes
+        const reds = nodes.filter(n => n.owner === OWNER.P2);
+        if (reds.length === 0) return;
+
+        // choose actions per red node
+        for (const src of reds){
+          const srcTroops = Math.floor(src.troops);
+          if (srcTroops < 10) continue;
+
+          // evaluate neighbors
+          const options = src.links.map(id => nodes[id]).filter(t => t.owner !== OWNER.P2);
+          if (options.length === 0) continue;
+
+          // priority: (1) capture weak neutrals nearby (2) punish weak blue borders (3) reinforce red under threat
+          let best = null;
+          let bestScore = -1e9;
+
+          for (const t of options){
+            const def = t.troops * (t.owner === OWNER.NEU ? 1.0 : COMBAT.defenderAdvantage);
+            const borderThreat = estimateThreatOn(src.id, OWNER.P2); // how threatened src is by blue
+            const targetValue = (t.owner === OWNER.P1 ? 1.35 : 0.85) + (t.level-1)*0.12;
+
+            // available attackers while keeping a reserve
+            const usable = Math.max(0, srcTroops - Math.floor(srcTroops * AI.reserveFrac));
+
+            // base desirability
+            let score = 0;
+            score += targetValue * 10;
+            score += (t.owner === OWNER.P1 ? 6 : 2);
+            score += (t.troops < 18 ? 6 : 0);
+
+            // prefer closer (fast capture)
+            const d = dist(src.x,src.y,t.x,t.y);
+            score += clamp(220 - d, -80, 220) / 20;
+
+            // don't suicide into strongholds
+            const margin = usable / Math.max(1, def);
+            score += (margin - 1) * 18;
+
+            // if src is threatened, be more defensive unless a great opportunity exists
+            score -= borderThreat * 9;
+
+            // slight randomness
+            score += (rand()-0.5) * 4;
+
+            // opportunistic snipe chance
+            if (t.owner === OWNER.P1 && t.troops < 12 && rand() < AI.opportunism) score += 8;
+
+            if (score > bestScore){
+              bestScore = score;
+              best = t;
+            }
+          }
+
+          if (!best) continue;
+
+          const defEff = best.troops * (best.owner === OWNER.NEU ? 1.0 : COMBAT.defenderAdvantage);
+          const usable = Math.max(0, srcTroops - Math.floor(srcTroops * AI.reserveFrac));
+
+          // decide attack
+          const shouldAttack =
+            usable > defEff * AI.safeMargin &&
+            rand() < AI.aggressiveness;
+
+          if (shouldAttack){
+            // send enough to win with a buffer
+            const need = Math.ceil(defEff * AI.safeMargin + 1);
+            const amt = clamp(need, MOVE.minSend, srcTroops - 1);
+            // Convert to fraction for sendTroops
+            const frac = amt / Math.max(1, srcTroops);
+            sendTroops(src.id, best.id, frac, false);
+          } else {
+            // If threatened and neighbor is blue, sometimes reinforce from deeper reds (handled implicitly by inaction)
+            // Or make small probing attacks into neutrals
+            if (best.owner === OWNER.NEU && usable > defEff * 1.05 && rand() < 0.25){
+              const need = Math.ceil(defEff * 1.08 + 1);
+              const amt = clamp(need, MOVE.minSend, srcTroops - 1);
+              const frac = amt / Math.max(1, srcTroops);
+              sendTroops(src.id, best.id, frac, false);
+            }
+          }
+        }
+      }
+
+      function estimateThreatOn(nodeId, owner){
+        // crude border threat: sum of nearby enemy troops adjacent to node
+        const n = nodes[nodeId];
+        let threat = 0;
+        for (const nbId of n.links){
+          const nb = nodes[nbId];
+          if (owner === OWNER.P2 && nb.owner === OWNER.P1) threat += nb.troops / 30;
+          if (owner === OWNER.P1 && nb.owner === OWNER.P2) threat += nb.troops / 30;
+        }
+        return threat;
+      }
+
+      // --------- Win check + stats
+      function computeStats(){
+        let p1Terr=0, p2Terr=0, neuTerr=0;
+        let p1Troops=0, p2Troops=0, neuTroops=0;
+        let inc1=0, inc2=0;
+
+        for (const n of nodes){
+          if (n.owner === OWNER.P1){ p1Terr++; p1Troops += n.troops; inc1 += genRate(n); }
+          else if (n.owner === OWNER.P2){ p2Terr++; p2Troops += n.troops; inc2 += genRate(n); }
+          else { neuTerr++; neuTroops += n.troops; }
+        }
+
+        ui.statTerr.textContent = `${nodes.length} (B:${p1Terr} R:${p2Terr} N:${neuTerr})`;
+        ui.statP1.textContent = fmt(p1Troops);
+        ui.statP2.textContent = fmt(p2Troops);
+        ui.statNeu.textContent = fmt(neuTroops);
+        ui.statInc1.textContent = inc1.toFixed(2) + '/s';
+        ui.statInc2.textContent = inc2.toFixed(2) + '/s';
+
+        // win banner
+        if (p1Terr === nodes.length){
+          ui.badgeWin.textContent = 'Blue wins';
+          ui.badgeWin.style.borderColor = COLORS.p1;
+        } else if (p2Terr === nodes.length){
+          ui.badgeWin.textContent = 'Red wins';
+          ui.badgeWin.style.borderColor = COLORS.p2;
+        } else {
+          ui.badgeWin.textContent = '—';
+          ui.badgeWin.style.borderColor = 'rgba(255,255,255,.12)';
+        }
+      }
+
+      // --------- Rendering
+      function resize(){
+        DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        const rect = canvas.getBoundingClientRect();
+        W = Math.max(400, rect.width);
+        H = Math.max(400, rect.height);
+        canvas.width = Math.floor(W * DPR);
+        canvas.height = Math.floor(H * DPR);
+        ctx.setTransform(DPR,0,0,DPR,0,0);
+
+        // If no map yet, create
+        if (nodes.length === 0) newGame();
+      }
+
+      function draw(){
+        // background
+        ctx.clearRect(0,0,W,H);
+
+        // soft grid
+        ctx.save();
+        ctx.globalAlpha = 0.10;
+        ctx.strokeStyle = 'rgba(255,255,255,.08)';
+        ctx.lineWidth = 1;
+        const step = 42;
+        for (let x = 0; x < W; x += step){
+          ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+        }
+        for (let y = 0; y < H; y += step){
+          ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+        }
+        ctx.restore();
+
+        // edges
+        ctx.save();
+        ctx.lineWidth = 2;
+        for (const a of nodes){
+          for (const j of a.links){
+            if (j < a.id) continue; // draw once
+            const b = nodes[j];
+
+            // edge color blended by ownership
+            const ca = ownerColor(a.owner);
+            const cb = ownerColor(b.owner);
+
+            // faint base
+            ctx.strokeStyle = 'rgba(255,255,255,.10)';
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+
+            // ownership gradient-ish: draw two halves
+            ctx.globalAlpha = 0.70;
+            ctx.strokeStyle = ca;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo((a.x+b.x)/2, (a.y+b.y)/2);
+            ctx.stroke();
+
+            ctx.strokeStyle = cb;
+            ctx.beginPath();
+            ctx.moveTo((a.x+b.x)/2, (a.y+b.y)/2);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+          }
+        }
+        ctx.restore();
+
+        // marches (moving units)
+        ctx.save();
+        for (const m of marches){
+          const t = clamp(m.progress, 0, 1);
+          const x = lerp(m.fx, m.tx, t);
+          const y = lerp(m.fy, m.ty, t);
+
+          ctx.fillStyle = ownerColor(m.owner);
+          ctx.globalAlpha = 0.95;
+          ctx.beginPath();
+          ctx.arc(x, y, 6, 0, Math.PI*2);
+          ctx.fill();
+
+          // trailing line
+          ctx.globalAlpha = 0.35;
+          ctx.strokeStyle = ownerColor(m.owner);
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(lerp(m.fx, m.tx, Math.max(0, t-0.10)), lerp(m.fy, m.ty, Math.max(0, t-0.10)));
+          ctx.lineTo(x,y);
+          ctx.stroke();
+          ctx.globalAlpha = 1.0;
+        }
+        ctx.restore();
+
+        // drag line
+        if (dragging && selected >= 0){
+          const a = nodes[selected];
+          ctx.save();
+          ctx.strokeStyle = ownerColor(a.owner);
+          ctx.lineWidth = 3;
+          ctx.setLineDash([8,8]);
+          ctx.globalAlpha = 0.7;
+          ctx.beginPath();
+          ctx.moveTo(a.x,a.y);
+          ctx.lineTo(dragPos.x, dragPos.y);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // nodes
+        for (const n of nodes){
+          const r = 22 + n.level*2.5;
+          const col = ownerColor(n.owner);
+
+          // outer glow if selected
+          if (n.id === selected){
+            ctx.save();
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = col;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, r+16, 0, Math.PI*2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // base
+          ctx.save();
+          ctx.fillStyle = 'rgba(15,23,51,.85)';
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r+2, 0, Math.PI*2);
+          ctx.fill();
+
+          // ring
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r, 0, Math.PI*2);
+          ctx.stroke();
+
+          // inner fill by owner
+          ctx.globalAlpha = 0.14;
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r-3, 0, Math.PI*2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+
+          // troops text
+          ctx.fillStyle = COLORS.text;
+          ctx.font = '800 13px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(fmt(n.troops), n.x, n.y - 2);
+
+          // id + level
+          ctx.fillStyle = COLORS.muted;
+          ctx.font = '700 10px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+          ctx.fillText(`#${n.id}  L${n.level}`, n.x, n.y + 14);
+
+          ctx.restore();
+        }
+      }
+
+      // --------- Input handling
+      function toCanvasPos(evt){
+        const rect = canvas.getBoundingClientRect();
+        const x = (evt.clientX - rect.left);
+        const y = (evt.clientY - rect.top);
+        return {x,y};
+      }
+
+      function hitNode(p){
+        for (let i=nodes.length-1;i>=0;i--){
+          const n = nodes[i];
+          const r = 26 + n.level*2.5;
+          if (dist(p.x,p.y,n.x,n.y) <= r) return n.id;
+        }
+        return -1;
+      }
+
+      function nearestNeighbor(fromId, p){
+        const from = nodes[fromId];
+        let best = -1, bestD = 1e9;
+        for (const j of from.links){
+          const t = nodes[j];
+          const d = dist(p.x,p.y,t.x,t.y);
+          if (d < bestD){ bestD=d; best=j; }
+        }
+        return {id: best, d: bestD};
+      }
+
+      function setSelected(id){
+        selected = id;
+        if (id < 0){
+          ui.badgeSel.textContent = 'Selected: —';
+          return;
+        }
+        const n = nodes[id];
+        ui.badgeSel.textContent = `Selected: #${n.id} (${ownerName(n.owner)})`;
+      }
+
+      // Click-to-send or drag-to-send
+      canvas.addEventListener('pointerdown', (evt) => {
+        if (paused) return;
+        canvas.setPointerCapture(evt.pointerId);
+        const p = toCanvasPos(evt);
+
+        const id = hitNode(p);
+        if (id !== -1){
+          const n = nodes[id];
+
+          // If clicking a blue node: select it
+          if (n.owner === OWNER.P1){
+            setSelected(id);
+            dragging = true;
+            dragPos = p;
+            ui.badgeMode.textContent = 'Mode: Dragging';
+            return;
+          }
+
+          // If we have a selected blue node and click a neighbor, send
+          if (selected !== -1 && nodes[selected].owner === OWNER.P1){
+            if (canSend(selected, id)){
+              const frac = (Number(ui.sendPct.value) / 100);
+              const forceAll = evt.shiftKey === true;
+              if (sendTroops(selected, id, frac, forceAll)){
+                logEvent(OWNER.P1, `Sent troops from #${selected} to #${id}.`);
+              }
+            } else {
+              // clicking non-neighbor: no action
+            }
+          }
+        } else {
+          // empty click: stop dragging
+          dragging = false;
+          ui.badgeMode.textContent = 'Mode: Click-to-send';
+        }
+      });
+
+      canvas.addEventListener('pointermove', (evt) => {
+        if (!dragging || selected === -1) return;
+        const p = toCanvasPos(evt);
+        dragPos = p;
+      });
+
+      canvas.addEventListener('pointerup', (evt) => {
+        if (!dragging || selected === -1) {
+          dragging = false;
+          ui.badgeMode.textContent = 'Mode: Click-to-send';
+          return;
+        }
+        const p = toCanvasPos(evt);
+        dragging = false;
+        ui.badgeMode.textContent = 'Mode: Click-to-send';
+
+        // if released near a neighbor, send
+        const nn = nearestNeighbor(selected, p);
+        if (nn.id !== -1){
+          const target = nn.id;
+          // require "close enough" to neighbor node
+          const tNode = nodes[target];
+          const r = 26 + tNode.level*2.5;
+          if (nn.d <= r + 14){
+            const frac = (Number(ui.sendPct.value) / 100);
+            const forceAll = evt.shiftKey === true;
+            if (sendTroops(selected, target, frac, forceAll)){
+              logEvent(OWNER.P1, `Sent troops from #${selected} to #${target}.`);
+            }
+          }
+        }
+      });
+
+      // --------- UI wiring
+      ui.btnNew.addEventListener('click', () => newGame());
+
+      ui.btnPause.addEventListener('click', () => {
+        paused = !paused;
+        ui.btnPause.textContent = paused ? 'Resume' : 'Pause';
+        logEvent(null, paused ? 'Paused.' : 'Resumed.');
+      });
+
+      ui.sendPct.addEventListener('input', () => {
+        ui.sendPctPill.textContent = ui.sendPct.value + '%';
+      });
+
+      ui.speed.addEventListener('input', () => {
+        timeScale = Number(ui.speed.value) / 100;
+        ui.speedPill.textContent = timeScale.toFixed(2) + '×';
+      });
+
+      window.addEventListener('resize', () => resize());
+
+      // --------- Main loop
+      function tick(now){
+        const rawDt = (now - lastT) / 1000;
+        lastT = now;
+
+        const dt = clamp(rawDt, 0, 0.05) * timeScale;
+
+        if (!paused){
+          updateEconomy(dt);
+          updateMarches(dt);
+          aiThink(dt);
+          computeStats();
+        }
+
+        draw();
+        requestAnimationFrame(tick);
+      }
+
+      // init
+      resize();
+      ui.sendPct.dispatchEvent(new Event('input'));
+      ui.speed.dispatchEvent(new Event('input'));
+      computeStats();
+      logEvent(null, 'Click a blue territory to start. Shift sends all.');
+
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>

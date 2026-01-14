@@ -1062,7 +1062,9 @@
           // id + level
           ctx.fillStyle = COLORS.muted;
           ctx.font = '700 10px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-          ctx.fillText(`#${n.id}  L${n.level}`, n.x, n.y + 14);
+          const autoMark = (n.owner === OWNER.P1 && n.auto === 'send') ? ' • A' : '';
+          ctx.fillText(`#${n.id}  L${n.level}${autoMark}`, n.x, n.y + 14);
+
 
           ctx.restore();
         }

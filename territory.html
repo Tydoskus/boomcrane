@@ -1228,6 +1228,23 @@
         if (id !== -1){
           const n = nodes[id];
 
+          // --- Alt/Option-click: set rally target for the currently selected BLUE node (works on friendly too)
+          if (evt.altKey && selected !== -1 && nodes[selected].owner === OWNER.P1) {
+            const src = nodes[selected];
+          
+            // allow rally to friendly/neutral/enemy, any node
+            src.rally = id;
+          
+            // optional: alt-click the selected node to clear rally
+            // if (id === selected) { src.rally = -1; src.auto = 'defend'; refreshAutoUI(); return; }
+          
+            src.auto = 'rally';
+            src.autoCd = 0;
+            refreshAutoUI();
+            logEvent(OWNER.P1, `Territory #${src.id} rally set to #${id}.`);
+            return;
+          }
+     
           // If clicking a blue node: select it
           if (n.owner === OWNER.P1){
             setSelected(id);
@@ -1240,16 +1257,7 @@
           // If we have a selected blue node and click a neighbor, send
           if (selected !== -1 && nodes[selected].owner === OWNER.P1){
             const src = nodes[selected];
-          
-            // Alt/Option-click sets rally target (no sending)
-            if (evt.altKey){
-              src.rally = id;
-              src.auto = 'rally';   // auto-switch into rally mode
-              src.autoCd = 0;
-              refreshAutoUI();
-              logEvent(OWNER.P1, `Territory #${src.id} rally set to #${id}.`);
-              return;
-            }
+
           
             // Normal click-to-send remains neighbor-only
             if (canSend(selected, id)){

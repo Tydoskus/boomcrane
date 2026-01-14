@@ -6,17 +6,16 @@
   --sunrise: #F3492B; /* Early Sunrise */
   --evening: #E56F33; /* Evening Light */
   --haze:    #E08D2D; /* Morning Haze */
-  --ivory:   #FFF3F7; /* Off / ivory white (allowed) */
+  --ivory:   #FAF3E7; /* Off/ivory (allowed) */
 
-  /* Roles (still only these colors via alpha) */
-  --bg: var(--ivory);
+  --radius: 18px;
+  --max: 1040px;
+
+  /* Only alphas of allowed colors */
   --text: var(--ocean);
-  --muted: rgba(24, 69, 78, .72);     /* ocean @ alpha */
-  --border: rgba(118,110,53, .35);    /* hemp @ alpha */
-  --shadow: 0 14px 34px rgba(24,69,78,.14);
-
-  --radius: 3px;
-  --max: 980px;
+  --muted: rgba(24,69,78,.72);        /* ocean */
+  --border: rgba(118,110,53,.35);     /* hemp */
+  --shadow: 0 14px 34px rgba(24,69,78,.14); /* ocean */
 }
 
 *{ box-sizing:border-box; }
@@ -26,15 +25,15 @@ body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   color: var(--text);
-  background: var(--bg);
+  background: var(--ivory); /* keep global background pure ivory */
   line-height: 1.55;
 }
 
-a{ color: inherit; text-decoration: none; }
-a:focus{ outline: none; }
+a{ color: inherit; text-decoration:none; }
+a:focus{ outline:none; }
 
 .container{
-  width: min(var(--max), calc(100% - 48px));
+  width: min(var(--max), calc(100% - 56px));
   margin: 0 auto;
 }
 
@@ -69,16 +68,18 @@ a:focus{ outline: none; }
 .nav a{
   padding: 8px 10px;
   border-radius: 12px;
+  border: 1px solid transparent;
 }
 
 .nav a:hover{
-  background: rgba(241,163,164,.22); /* shell */
-  color: var(--text);
+  background: rgba(241,163,164,.30); /* shell */
+  border-color: rgba(241,163,164,.70);
+  color: var(--ocean);
 }
 
 /* Hero */
 .hero{
-  padding: 52px 0 18px;
+  padding: 52px 0 10px;
 }
 
 .pill{
@@ -86,21 +87,21 @@ a:focus{ outline: none; }
   padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(241,163,164,.16); /* shell */
-  color: var(--text);
+  background: rgba(241,163,164,.18); /* shell */
+  color: var(--ocean);
   font-size: 13px;
 }
 
 h1{
   margin: 14px 0 8px;
-  font-size: clamp(36px, 4.2vw, 54px);
+  font-size: clamp(38px, 4.4vw, 56px);
   letter-spacing: -0.02em;
-  line-height: 1.05;
+  line-height: 1.03;
 }
 
 .sub{
   margin: 0;
-  max-width: 62ch;
+  max-width: 64ch;
   color: var(--muted);
   font-size: 16px;
 }
@@ -127,6 +128,19 @@ h2{
   margin:0;
   font-size: 22px;
   letter-spacing: -0.01em;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+h2::after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:0;
+  width: 84px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--haze);
 }
 
 h3{
@@ -136,22 +150,6 @@ h3{
 }
 
 .muted{ color: var(--muted); }
-
-/* Section headings: add visible accent rules */
-.section-head h2{
-  position: relative;
-  padding-bottom: 10px;
-}
-.section-head h2::after{
-  content:"";
-  position:absolute;
-  left:0;
-  bottom:0;
-  width: 76px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--haze);
-}
 
 /* Buttons (solid palette fills, no gradients) */
 .btn{
@@ -168,7 +166,7 @@ h3{
 }
 
 .btn:hover{ transform: translateY(-1px); }
-.btn:focus{ box-shadow: 0 0 0 6px rgba(224,141,45,.30); } /* haze alpha ok */
+.btn:focus{ box-shadow: 0 0 0 6px rgba(224,141,45,.30); } /* haze */
 
 .btn-small{
   padding: 10px 12px;
@@ -176,25 +174,87 @@ h3{
   font-size: 14px;
 }
 
+.btn-ocean{
+  background: var(--ocean);
+  border-color: var(--ocean);
+  color: var(--ivory);
+}
 .btn-sunrise{
   background: var(--sunrise);
   border-color: var(--sunrise);
   color: var(--ivory);
 }
-
 .btn-evening{
   background: var(--evening);
   border-color: var(--evening);
   color: var(--ivory);
 }
 
-.btn-ocean{
-  background: var(--ocean);
-  border-color: var(--ocean);
-  color: var(--ivory);
+/* Grid (restores 3-column layout on desktop) */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
 }
 
-/* Tags: each tag is a real palette color chip */
+.grid.two{
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Cards */
+.card{
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--ivory);
+  box-shadow: var(--shadow);
+  padding: 18px;
+  display:flex;
+  flex-direction:column;
+  min-height: 190px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(24,69,78,.18);
+}
+
+.card::before{
+  content:"";
+  position:absolute;
+  left:0; top:0; right:0;
+  height: 8px;
+}
+
+.accent-ocean::before{ background: var(--ocean); }
+.accent-sunrise::before{ background: var(--sunrise); }
+.accent-shell::before{ background: var(--shell); }
+
+.card-shell{
+  background: rgba(241,163,164,.16); /* shell */
+  border-color: rgba(241,163,164,.55);
+}
+
+.card-top{ flex:1; }
+
+.card-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.tags{
+  margin-top: 12px;
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Tags = real color chips */
 .tag{
   display:inline-flex;
   padding: 6px 10px;
@@ -205,107 +265,27 @@ h3{
   font-size: 12px;
 }
 
-.tag-ocean{
-  background: var(--ocean);
-  border-color: var(--ocean);
-  color: var(--ivory);
-}
-.tag-hemp{
-  background: var(--hemp);
-  border-color: var(--hemp);
-  color: var(--ivory);
-}
-.tag-shell{
-  background: var(--shell);
-  border-color: var(--shell);
-  color: var(--ocean);
-}
-.tag-sunrise{
-  background: var(--sunrise);
-  border-color: var(--sunrise);
-  color: var(--ivory);
-}
-.tag-evening{
-  background: var(--evening);
-  border-color: var(--evening);
-  color: var(--ivory);
-}
-.tag-haze{
-  background: var(--haze);
-  border-color: var(--haze);
-  color: var(--ocean);
-}
-
-/* Cards: strong top accent bars using the palette */
-.card{
-  border: 2px solid rgba(118,110,53,.35); /* hemp alpha */
-  border-radius: var(--radius);
-  background: var(--ivory);
-  box-shadow: 0 14px 34px rgba(24,69,78,.14); /* ocean alpha */
-  padding: 18px;
-  display:flex;
-  flex-direction:column;
-  min-height: 180px;
-  position: relative;
-  overflow: hidden;
-}
-
-.card::before{
-  content:"";
-  position:absolute;
-  left:0; top:0; right:0;
-  height: 10px;
-}
-
-.accent-ocean::before{ background: var(--ocean); }
-.accent-sunrise::before{ background: var(--sunrise); }
-.accent-shell::before{ background: var(--shell); }
-
-/* Give one card a shell-tinted body so the palette shows more */
-.card-shell{
-  background: rgba(241,163,164,.18); /* shell alpha */
-  border-color: rgba(241,163,164,.55);
-}
-
-/* Nav hover uses palette more clearly */
-.nav a:hover{
-  background: rgba(241,163,164,.35); /* shell alpha */
-  color: var(--ocean);
-  border: 1px solid rgba(241,163,164,.70);
-}
-
-
-/* Card accent bars (still only palette colors) */
-.card-accent-ocean::before,
-.card-accent-sunrise::before{
-  content:"";
-  position:absolute;
-  left:0; top:0; right:0;
-  height: 10px;
-}
-
-.card-accent-ocean::before{ background: var(--ocean); }
-.card-accent-sunrise::before{ background: var(--sunrise); }
-
-.card-soft{
-  background: rgba(241,163,164,.14); /* shell */
-  border-color: rgba(241,163,164,.38);
-}
+.tag-ocean{   background: var(--ocean);   border-color: var(--ocean);   color: var(--ivory); }
+.tag-hemp{    background: var(--hemp);    border-color: var(--hemp);    color: var(--ivory); }
+.tag-shell{   background: var(--shell);   border-color: var(--shell);   color: var(--ocean); }
+.tag-sunrise{ background: var(--sunrise); border-color: var(--sunrise); color: var(--ivory); }
+.tag-evening{ background: var(--evening); border-color: var(--evening); color: var(--ivory); }
+.tag-haze{    background: var(--haze);    border-color: var(--haze);    color: var(--ocean); }
 
 /* Panel */
 .panel{
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(241,163,164,.14); /* shell */
+  background: rgba(118,110,53,.08); /* hemp */
   padding: 18px;
   box-shadow: var(--shadow);
 }
 
 /* Link cards */
 .linkcard{
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-radius: var(--radius);
-  background: rgba(250,243,231,.92); /* ivory */
+  background: var(--ivory);
   padding: 16px 18px;
   box-shadow: var(--shadow);
   display:flex;
@@ -316,9 +296,9 @@ h3{
 }
 
 .linkcard:hover{
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   background: rgba(224,141,45,.10); /* haze */
-  border-color: rgba(224,141,45,.45);
+  border-color: rgba(224,141,45,.55);
 }
 
 .linktitle{ font-weight: 750; }
@@ -331,7 +311,7 @@ h3{
   margin-top: 18px;
 }
 
-@media (max-width: 900px){
+@media (max-width: 980px){
   .grid{ grid-template-columns: 1fr; }
   .grid.two{ grid-template-columns: 1fr; }
   .section-head{ align-items:flex-start; flex-direction:column; }

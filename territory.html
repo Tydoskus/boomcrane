@@ -652,8 +652,8 @@
           // Generation
           n.troops += genRate(n) * dt;
           // soft cap to reduce runaway stacking
-          const cap = 220 + n.level*55;
-          if (n.troops > cap) n.troops = lerp(n.troops, cap, 0.03);
+          const cap = 100 + n.level*100;
+          if (n.troops > cap) n.troops = lerp(n.troops, cap, 0.01);
         }
       }
 

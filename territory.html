@@ -520,7 +520,8 @@
                 level: 1,
                 heldTime: 0,
                 auto: 'defend',   // 'defend' | 'send'
-                autoCd: 0,        // seconds until next auto action
+                autoCd: 0,
+                rally: -1, // node to send to
                 links: []
               });
               break;
@@ -1062,8 +1063,8 @@
           // id + level
           ctx.fillStyle = COLORS.muted;
           ctx.font = '700 10px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-          const autoMark = (n.owner === OWNER.P1 && n.auto === 'send') ? ' • A' : '';
-          ctx.fillText(`#${n.id}  L${n.level}${autoMark}`, n.x, n.y + 14);
+          const mark = (n.owner === OWNER.P1 && n.auto === 'rally' && n.rally >= 0) ? `  R→#${n.rally}` : '';
+          ctx.fillText(`#${n.id}  L${n.level}${mark}`, n.x, n.y + 14);
 
 
           ctx.restore();
@@ -1119,65 +1120,103 @@
         const n = nodes[selected];
         const isPlayerNode = (n.owner === OWNER.P1);
         ui.btnAuto.disabled = !isPlayerNode;
-        ui.btnAuto.textContent = `Auto: ${n.auto === 'send' ? 'Send' : 'Defend'}`;
+      
+        if (!isPlayerNode){
+          ui.btnAuto.textContent = 'Auto: —';
+          return;
+        }
+      
+        if (n.auto === 'rally'){
+          const tgt = (n.rally >= 0) ? `#${n.rally}` : '—';
+          ui.btnAuto.textContent = `Auto: Rally ${tgt}`;
+        } else {
+          ui.btnAuto.textContent = 'Auto: Defend';
+        }
       }
 
-      function pickAutoTarget(fromId){
-        const from = nodes[fromId];
-      
-        // Prefer attacking non-player neighbors with lowest troops (weakest)
-        let best = -1;
-        let bestScore = 1e18;
-      
-        for (const j of from.links){
-          const t = nodes[j];
-      
-          // priority buckets: enemy (0), neutral (1), friendly (2)
-          const bucket =
-            (t.owner === OWNER.P2) ? 0 :
-            (t.owner === OWNER.NEU) ? 1 : 2;
-      
-          // lower troops => better target; add mild distance penalty
-          const d = dist(from.x, from.y, t.x, t.y);
-          const score = bucket * 1e6 + t.troops * 10 + d * 0.5;
-      
-          if (score < bestScore){
-            bestScore = score;
-            best = j;
-          }
-        }
-        return best;
+
+      function nodeMoveCost(id){
+        const o = nodes[id].owner;
+        // prefer routing through blue, then neutral, avoid routing through red
+        if (o === OWNER.P1) return 0;
+        if (o === OWNER.NEU) return 1;
+        return 3;
       }
       
-      function updateAuto(dt){
+      // Dijkstra: returns next hop from `start` toward `goal` (or -1)
+      function nextHopToward(start, goal){
+        if (start === goal) return -1;
+      
+        const N = nodes.length;
+        const distArr = new Array(N).fill(Infinity);
+        const prev = new Array(N).fill(-1);
+        const visited = new Array(N).fill(false);
+      
+        distArr[start] = 0;
+      
+        for (let iter = 0; iter < N; iter++){
+          // pick unvisited with smallest dist
+          let u = -1, best = Infinity;
+          for (let i=0;i<N;i++){
+            if (!visited[i] && distArr[i] < best){
+              best = distArr[i];
+              u = i;
+            }
+          }
+          if (u === -1) break;
+          visited[u] = true;
+          if (u === goal) break;
+      
+          for (const v of nodes[u].links){
+            const alt = distArr[u] + nodeMoveCost(v);
+            if (alt < distArr[v]){
+              distArr[v] = alt;
+              prev[v] = u;
+            }
+          }
+        }
+      
+        if (prev[goal] === -1) return -1;
+      
+        // walk back from goal until the step right after start
+        let cur = goal;
+        let p = prev[cur];
+        while (p !== -1 && p !== start){
+          cur = p;
+          p = prev[cur];
+        }
+        return cur; // neighbor hop from start
+      }
+      
+      function updateRallyAuto(dt){
         for (const n of nodes){
           if (n.owner !== OWNER.P1) continue;
-          if (n.auto !== 'send') continue;
+          if (n.auto !== 'rally') continue;
+          if (n.rally < 0 || n.rally >= nodes.length) continue;
+          if (n.id === n.rally) continue;
       
           n.autoCd -= dt;
           if (n.autoCd > 0) continue;
       
-          // Only send if we have enough to matter
           const total = Math.floor(n.troops);
           if (total < 18){
-            n.autoCd = 0.6; // recheck soon
+            n.autoCd = 0.6;
             continue;
           }
       
-          const target = pickAutoTarget(n.id);
-          if (target === -1){
+          // decide next hop toward rally
+          const hop = n.links.includes(n.rally) ? n.rally : nextHopToward(n.id, n.rally);
+          if (hop === -1){
             n.autoCd = 1.0;
             continue;
           }
       
-          // Send a stable fraction; hold a little back
-          const frac = 0.35; // tweak as desired
-          const sent = sendTroops(n.id, target, frac, false);
-      
-          // cadence
-          n.autoCd = sent ? (1.2 + rand()*0.9) : 0.8;
+          // send a controlled fraction forward
+          const sent = sendTroops(n.id, hop, 0.30, false);
+          n.autoCd = sent ? (1.0 + rand()*0.8) : 0.8;
         }
       }
+
 
       // Click-to-send or drag-to-send
       canvas.addEventListener('pointerdown', (evt) => {
@@ -1200,14 +1239,25 @@
 
           // If we have a selected blue node and click a neighbor, send
           if (selected !== -1 && nodes[selected].owner === OWNER.P1){
+            const src = nodes[selected];
+          
+            // Alt/Option-click sets rally target (no sending)
+            if (evt.altKey){
+              src.rally = id;
+              src.auto = 'rally';   // auto-switch into rally mode
+              src.autoCd = 0;
+              refreshAutoUI();
+              logEvent(OWNER.P1, `Territory #${src.id} rally set to #${id}.`);
+              return;
+            }
+          
+            // Normal click-to-send remains neighbor-only
             if (canSend(selected, id)){
               const frac = (Number(ui.sendPct.value) / 100);
               const forceAll = evt.shiftKey === true;
               if (sendTroops(selected, id, frac, forceAll)){
                 logEvent(OWNER.P1, `Sent troops from #${selected} to #${id}.`);
               }
-            } else {
-              // clicking non-neighbor: no action
             }
           }
         } else {
@@ -1273,11 +1323,19 @@
         const n = nodes[selected];
         if (n.owner !== OWNER.P1) return;
       
-        n.auto = (n.auto === 'send') ? 'defend' : 'send';
-        n.autoCd = 0; // act immediately on next tick if set to send
+        if (n.auto === 'rally'){
+          n.auto = 'defend';
+        } else {
+          n.auto = 'rally';
+          if (n.rally === -1) {
+            // if no rally target yet, keep it in rally mode but it won’t send until you alt-click a target
+            logEvent(OWNER.P1, `Alt/Option-click any node to set rally for #${n.id}.`);
+          }
+          n.autoCd = 0;
+        }
         refreshAutoUI();
-        logEvent(OWNER.P1, `Territory #${n.id} set to ${n.auto.toUpperCase()}.`);
       });
+
 
 
       window.addEventListener('resize', () => resize());
@@ -1292,7 +1350,7 @@
         if (!paused){
           updateEconomy(dt);
           updateMarches(dt);
-          updateAuto(dt);
+          updateRallyAuto(dt);
           aiThink(dt);
           computeStats();
         }

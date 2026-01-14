@@ -6,7 +6,7 @@
   --sunrise: #F3492B; /* Early Sunrise */
   --evening: #E56F33; /* Evening Light */
   --haze:    #E08D2D; /* Morning Haze */
-  --ivory:   #FAF3F7; /* Off / ivory white (allowed) */
+  --ivory:   #FFF3F7; /* Off / ivory white (allowed) */
 
   /* Roles (still only these colors via alpha) */
   --bg: var(--ivory);

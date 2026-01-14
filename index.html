@@ -15,7 +15,11 @@ layout: none
 <body>
   <header class="topbar">
     <div class="container topbar-inner">
-      <a class="brand" href="{{ '/' | relative_url }}">Ryan Guild</a>
+      <a class="brand" href="{{ '/' | relative_url }}">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Ryan Guild</span>
+      </a>
+
       <nav class="nav">
         <a href="#projects">Projects</a>
         <a href="#about">About</a>
@@ -26,16 +30,21 @@ layout: none
 
   <main class="container">
     <section class="hero">
-      <p class="pill">Interactive demos • web builds</p>
+      <p class="pill">
+        <span class="pill-dot" aria-hidden="true"></span>
+        Interactive demos • web builds
+      </p>
+
       <h1>Ryan Guild</h1>
+
       <p class="sub">
         Independent builder of practical software and interactive demos.
       </p>
-      <div class="cta-row">
-        <a class="btn btn-sunrise" href="#projects">View projects</a>
-        <a class="btn btn-ocean" href="#links">Contact</a>
-      </div>
 
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#projects">View projects</a>
+        <a class="btn btn-outline" href="#links">Contact</a>
+      </div>
     </section>
 
     <section id="projects" class="section">
@@ -47,49 +56,54 @@ layout: none
       <div class="grid">
         <article class="card accent-ocean">
           <div class="card-top">
+            <div class="card-kicker">Physics</div>
             <h3>Boom Crane Physics</h3>
             <p class="muted">Physics-focused crane simulator with satisfying constraints and motion.</p>
+
             <div class="tags">
-              <span class="tag tag-ocean">HTML</span>
-              <span class="tag tag-hemp">JS</span>
-              <span class="tag tag-haze">Physics</span>
+              <span class="tag">HTML</span>
+              <span class="tag">JS</span>
+              <span class="tag tag-accent">Physics</span>
             </div>
           </div>
+
           <div class="card-actions">
-            <a class="btn btn-sunrise btn-small" href="{{ '/crane.html' | relative_url }}">Play</a>
-            <a class="btn btn-ocean btn-small" href="{{ '/crane.html' | relative_url }}">Open</a>
+            <a class="btn btn-primary btn-small" href="{{ '/crane.html' | relative_url }}">Play</a>
+            <a class="btn btn-outline btn-small" href="{{ '/crane.html' | relative_url }}">Open</a>
           </div>
         </article>
-      
-        <article class="card accent-sunrise">
+
+        <article class="card accent-ocean">
           <div class="card-top">
+            <div class="card-kicker">Strategy</div>
             <h3>Territory Conquer</h3>
             <p class="muted">Territory-control prototype with troop generation and AI pressure.</p>
+
             <div class="tags">
-              <span class="tag tag-sunrise">Strategy</span>
-              <span class="tag tag-evening">AI</span>
-              <span class="tag tag-hemp">Systems</span>
+              <span class="tag">Strategy</span>
+              <span class="tag">Systems</span>
+              <span class="tag tag-accent">AI</span>
             </div>
           </div>
+
           <div class="card-actions">
-            <a class="btn btn-evening btn-small" href="{{ '/territory.html' | relative_url }}">Play</a>
-            <a class="btn btn-ocean btn-small" href="{{ '/territory.html' | relative_url }}">Open</a>
+            <a class="btn btn-primary btn-small" href="{{ '/territory.html' | relative_url }}">Play</a>
+            <a class="btn btn-outline btn-small" href="{{ '/territory.html' | relative_url }}">Open</a>
           </div>
         </article>
-      
-        <article class="card accent-shell card-shell">
+
+        <article class="card accent-ocean card-shell">
           <div class="card-top">
+            <div class="card-kicker">Next</div>
             <h3>Next</h3>
             <p class="muted">Add another project card: screenshot, 1-line hook, and a play link.</p>
+
             <div class="tags">
-              <span class="tag tag-shell">Prototype</span>
-              <span class="tag tag-haze">UI</span>
-              <span class="tag tag-hemp">Build</span>
+              <span class="tag">Prototype</span>
+              <span class="tag tag-accent">UI</span>
+              <span class="tag">Build</span>
             </div>
           </div>
-        </article>
-      </div>
-
         </article>
       </div>
     </section>
@@ -99,10 +113,17 @@ layout: none
         <h2>About</h2>
         <p class="muted">Short and concrete.</p>
       </div>
+
       <div class="panel">
         <p>
           I build small, complete projects—clean UI, tight feedback loops, and systems that feel good to use.
         </p>
+
+        <div class="meta-row">
+          <span class="meta-chip">Web</span>
+          <span class="meta-chip">UI</span>
+          <span class="meta-chip">Systems</span>
+        </div>
       </div>
     </section>
 
@@ -118,15 +139,15 @@ layout: none
             <div class="linktitle">GitHub</div>
             <div class="muted">github.com/tydoskus</div>
           </div>
-          <div class="arrow">↗</div>
+          <div class="arrow" aria-hidden="true">↗</div>
         </a>
 
-        <a class="linkcard" href="mailto:you@email.com">
+        <a class="linkcard" href="mailto:ryanjguild@gmail.com">
           <div>
             <div class="linktitle">Email</div>
             <div class="muted">ryanjguild@gmail.com</div>
           </div>
-          <div class="arrow">↗</div>
+          <div class="arrow" aria-hidden="true">↗</div>
         </a>
       </div>
     </section>

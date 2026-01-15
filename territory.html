@@ -1190,30 +1190,34 @@
         return cur; // neighbor hop from start
       }
       
-      function updateRallyAuto(dt){
-		  const FRACTION = 0.05; // 5% per generation step
-		
-		  for (const n of nodes){
-		    if (n.owner !== OWNER.P1) continue;
-		    if (n.auto !== 'rally') continue;
-		    if (n.rally < 0 || n.rally >= nodes.length) continue;
-		    if (n.id === n.rally) continue;
-		
-		    const total = Math.floor(n.troops);
-		    if (total <= 1) continue; // keep 1 troop behind
-		
-		    const hop = n.links.includes(n.rally) ? n.rally : nextHopToward(n.id, n.rally);
-		    if (hop === -1) continue;
-		
-		    // send 5% (minimum 1), but never reduce below 1 remaining at source
-		    const amount = Math.max(1, Math.floor(total * FRACTION));
-		    if (amount >= total) continue; // safety: would empty it
-		
-		    // temporarily send exact amount by converting to a fraction of current total
-		    const frac = amount / total;
-		    sendTroops(n.id, hop, frac, false);
-		  }
-		}
+    function updateRallyAuto(dt){
+	  for (const n of nodes){
+	    if (n.owner !== OWNER.P1) continue;
+	    if (n.auto !== 'rally') continue;
+	    if (n.rally < 0 || n.rally >= nodes.length) continue;
+	    if (n.id === n.rally) continue;
+	
+	    n.autoCd -= dt;
+	    if (n.autoCd > 0) continue;
+	
+	    const total = Math.floor(n.troops);
+	    if (total < 1){
+	      n.autoCd = 0.6;
+	      continue;
+	    }
+	
+	    const hop = n.links.includes(n.rally) ? n.rally : nextHopToward(n.id, n.rally);
+	    if (hop === -1){
+	      n.autoCd = 1.0;
+	      continue;
+	    }
+	
+	    const sent = sendTroops(n.id, hop, 0.30, false);
+	    n.autoCd = sent ? (1.0 + rand()*0.8) : 0.8;
+	  }
+	}
+	
+
 
 
       // Click-to-send or drag-to-send

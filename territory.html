@@ -415,25 +415,25 @@
         basePlayer: 0.95,      // troops/sec at level 1
         baseNeutral: 0.35,     // troops/sec
         levelBonus: 0.22,      // + per level
-        maxLevel: 6,
+        maxLevel: 7,
         levelUpEvery: 18.0,    // seconds held -> next level
       };
 
       const COMBAT = {
-        defenderAdvantage: 1.05, // small edge for defenders
+        defenderAdvantage: 1.10, // small edge for defenders
         captureFloor: 1.0,       // min troops remain when captured
       };
 
       const MOVE = {
-        speed: 160,             // px/sec
+        speed: 140,             // px/sec
         minSend: 1,
       };
 
       const AI = {
-        thinkEvery: 1.85,        // seconds
+        thinkEvery: 0.8,        // seconds
         aggressiveness: 0.72,    // higher -> more attacks
         reserveFrac: 0.35,       // keep fraction at source
-        safeMargin: 1.15,        // attack only if (attackers > defenders * margin)
+        safeMargin: 1.2,        // attack only if (attackers > defenders * margin)
         opportunism: 0.35,       // chance to snipe weak neighbor
       };
 
@@ -530,7 +530,7 @@
         }
 
         // Connect with k-nearest + enforce connectivity
-        const K = 3;
+        const K = 2;
         for (let i=0;i<n;i++){
           const a = nodes[i];
           const dists = [];
@@ -677,7 +677,7 @@
           // Generation
           n.troops += genRate(n) * dt;
           // soft cap to reduce runaway stacking
-          const cap = 100 + n.level*100;
+          const cap = n.level*100;
           if (n.troops > cap) n.troops = lerp(n.troops, cap, 0.01);
         }
       }
@@ -940,7 +940,7 @@
 
         // edges
         ctx.save();
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 5;
         for (const a of nodes){
           for (const j of a.links){
             if (j < a.id) continue; // draw once
@@ -1005,7 +1005,7 @@
           const a = nodes[selected];
           ctx.save();
           ctx.strokeStyle = ownerColor(a.owner);
-          ctx.lineWidth = 3;
+          ctx.lineWidth = 5;
           ctx.setLineDash([8,8]);
           ctx.globalAlpha = 0.7;
           ctx.beginPath();
@@ -1023,7 +1023,7 @@
           // outer glow if selected
           if (n.id === selected){
             ctx.save();
-            ctx.globalAlpha = 0.18;
+            ctx.globalAlpha = 0.25;
             ctx.fillStyle = col;
             ctx.beginPath();
             ctx.arc(n.x, n.y, r+16, 0, Math.PI*2);
@@ -1046,7 +1046,7 @@
           ctx.stroke();
 
           // inner fill by owner
-          ctx.globalAlpha = 0.14;
+          ctx.globalAlpha = 0.2;
           ctx.fillStyle = col;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r-3, 0, Math.PI*2);
@@ -1103,12 +1103,14 @@
         selected = id;
         if (id < 0){
           ui.badgeSel.textContent = 'Selected: —';
+          refreshAutoUI();
           return;
         }
         const n = nodes[id];
         ui.badgeSel.textContent = `Selected: #${n.id} (${ownerName(n.owner)})`;
         refreshAutoUI();
       }
+
 
       function refreshAutoUI(){
         if (!ui.btnAuto) return;
@@ -1194,117 +1196,150 @@
           if (n.auto !== 'rally') continue;
           if (n.rally < 0 || n.rally >= nodes.length) continue;
           if (n.id === n.rally) continue;
-      
-          n.autoCd -= dt;
-          if (n.autoCd > 0) continue;
-      
+
+          // If we have >1 troop, ship everything (keep 1 behind)
           const total = Math.floor(n.troops);
-          if (total < 18){
-            n.autoCd = 0.6;
-            continue;
-          }
-      
+          if (total <= 1) continue;
+
           // decide next hop toward rally
           const hop = n.links.includes(n.rally) ? n.rally : nextHopToward(n.id, n.rally);
-          if (hop === -1){
-            n.autoCd = 1.0;
-            continue;
-          }
-      
-          // send a controlled fraction forward
-          const sent = sendTroops(n.id, hop, 0.30, false);
-          n.autoCd = sent ? (1.0 + rand()*0.8) : 0.8;
+          if (hop === -1) continue;
+
+          // send ALL immediately
+          sendTroops(n.id, hop, 1.0, true);
         }
       }
 
 
+		
       // Click-to-send or drag-to-send
+      // no modifier: select blue
+      // alt/option: set rally for selected -> clicked node (any owner), no selection changes
+      // shift: send ALL from selected -> clicked neighbor (or drag neighbor), no selection changes
+      let pendingDrag = false;
+      let dragStart = {x:0,y:0};
+      const DRAG_THRESH = 8;
+
       canvas.addEventListener('pointerdown', (evt) => {
         if (paused) return;
         canvas.setPointerCapture(evt.pointerId);
         const p = toCanvasPos(evt);
+        dragPos = p;
 
         const id = hitNode(p);
-        if (id !== -1){
-          const n = nodes[id];
-
-          // --- Alt/Option-click: set rally target for the currently selected BLUE node (works on friendly too)
-          if (evt.altKey && selected !== -1 && nodes[selected].owner === OWNER.P1) {
-            const src = nodes[selected];
-          
-            // allow rally to friendly/neutral/enemy, any node
-            src.rally = id;
-          
-            // optional: alt-click the selected node to clear rally
-            // if (id === selected) { src.rally = -1; src.auto = 'defend'; refreshAutoUI(); return; }
-          
-            src.auto = 'rally';
-            src.autoCd = 0;
-            refreshAutoUI();
-            logEvent(OWNER.P1, `Territory #${src.id} rally set to #${id}.`);
-            return;
-          }
-     
-          // If clicking a blue node: select it
-          if (n.owner === OWNER.P1){
-            setSelected(id);
-            dragging = true;
-            dragPos = p;
-            ui.badgeMode.textContent = 'Mode: Dragging';
-            return;
-          }
-
-          // If we have a selected blue node and click a neighbor, send
-          if (selected !== -1 && nodes[selected].owner === OWNER.P1){
-            const src = nodes[selected];
-
-          
-            // Normal click-to-send remains neighbor-only
-            if (canSend(selected, id)){
-              const frac = (Number(ui.sendPct.value) / 100);
-              const forceAll = evt.shiftKey === true;
-              if (sendTroops(selected, id, frac, forceAll)){
-                logEvent(OWNER.P1, `Sent troops from #${selected} to #${id}.`);
-              }
-            }
-          }
-        } else {
-          // empty click: stop dragging
-          dragging = false;
-          ui.badgeMode.textContent = 'Mode: Click-to-send';
-        }
-      });
-
-      canvas.addEventListener('pointermove', (evt) => {
-        if (!dragging || selected === -1) return;
-        const p = toCanvasPos(evt);
-        dragPos = p;
-      });
-
-      canvas.addEventListener('pointerup', (evt) => {
-        if (!dragging || selected === -1) {
+        if (id === -1){
+          pendingDrag = false;
           dragging = false;
           ui.badgeMode.textContent = 'Mode: Click-to-send';
           return;
         }
+
+        const clicked = nodes[id];
+        const hasSelected = (selected !== -1 && nodes[selected].owner === OWNER.P1);
+        const isAlt = evt.altKey === true;
+        const isShift = evt.shiftKey === true;
+
+        // 1) Alt/Option: set rally target for selected (do not change selection)
+        if (isAlt && hasSelected){
+          const src = nodes[selected];
+          src.rally = id;        // allow rally to friendly/neutral/enemy
+          src.auto = 'rally';
+          src.autoCd = 0;
+          refreshAutoUI();
+          logEvent(OWNER.P1, `Territory #${src.id} rally set to #${id}.`);
+          return;
+        }
+
+        if (clicked.owner === OWNER.P1){
+          // Alt prevents selection (reserved for rally targeting)
+          if (isAlt){
+            pendingDrag = false;
+            dragging = false;
+            return;
+          }
+
+          // Shift should NOT block dragging; it just modifies "send all" on release
+          if (!isShift){
+            // normal click selects
+            setSelected(id);
+          }
+          // regardless of Shift, allow drag-start from the current selected node
+          // (if nothing selected yet and Shift held, we still want to be able to drag from this node)
+          if (selected === -1 || nodes[selected].owner !== OWNER.P1){
+            setSelected(id);
+          }
+
+          pendingDrag = true;
+          dragging = false;
+          dragStart = p;
+          dragPos = p;
+          ui.badgeMode.textContent = 'Mode: Click-to-send';
+          return;
+        }
+
+
+        // 3) Clicking non-blue target: if a blue node is selected, and target is neighbor, send
+        if (hasSelected && canSend(selected, id)){
+          const frac = Number(ui.sendPct.value) / 100;
+          const forceAll = isShift; // Shift means send all
+          if (sendTroops(selected, id, frac, forceAll)){
+            logEvent(OWNER.P1, `Sent troops from #${selected} to #${id}.`);
+          }
+        }
+      });
+
+      canvas.addEventListener('pointermove', (evt) => {
+        // allow drag only when we started pendingDrag from a normal selection click
+        if (!pendingDrag || selected === -1) return;
+
         const p = toCanvasPos(evt);
+        dragPos = p;
+
+        if (!dragging){
+          const dx = p.x - dragStart.x;
+          const dy = p.y - dragStart.y;
+          if (Math.hypot(dx,dy) >= DRAG_THRESH){
+            dragging = true;
+            ui.badgeMode.textContent = 'Mode: Dragging';
+          }
+        }
+      });
+
+      canvas.addEventListener('pointerup', (evt) => {
+        if (selected === -1){
+          pendingDrag = false;
+          dragging = false;
+          ui.badgeMode.textContent = 'Mode: Click-to-send';
+          return;
+        }
+
+        // If no drag happened, we're done (click actions already handled in pointerdown)
+        if (!dragging){
+          pendingDrag = false;
+          ui.badgeMode.textContent = 'Mode: Click-to-send';
+          return;
+        }
+
+        // Drag-send: send to neighbor closest to release point (works on friendly too)
+        const p = toCanvasPos(evt);
+        pendingDrag = false;
         dragging = false;
         ui.badgeMode.textContent = 'Mode: Click-to-send';
 
-        // if released near a neighbor, send
         const nn = nearestNeighbor(selected, p);
-        if (nn.id !== -1){
-          const target = nn.id;
-          // require "close enough" to neighbor node
-          const tNode = nodes[target];
-          const r = 26 + tNode.level*2.5;
-          if (nn.d <= r + 14){
-            const frac = (Number(ui.sendPct.value) / 100);
-            const forceAll = evt.shiftKey === true;
-            if (sendTroops(selected, target, frac, forceAll)){
-              logEvent(OWNER.P1, `Sent troops from #${selected} to #${target}.`);
-            }
-          }
+        if (nn.id === -1) return;
+
+        const target = nn.id;
+        const tNode = nodes[target];
+        const r = 26 + tNode.level*2.5;
+        if (nn.d > r + 14) return;
+
+        // Shift during drag release sends all; otherwise uses slider %
+        const frac = Number(ui.sendPct.value) / 100;
+        const forceAll = (evt.shiftKey === true);
+
+        if (sendTroops(selected, target, frac, forceAll)){
+          logEvent(OWNER.P1, `Sent troops from #${selected} to #${target}.`);
         }
       });
 
